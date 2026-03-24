@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/fleet.js": {
+      "runtime": "nodejs20.x"
+    }
+  }
+}
