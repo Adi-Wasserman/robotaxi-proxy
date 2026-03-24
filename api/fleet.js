@@ -7,7 +7,7 @@
 const CONVEX_URL = "https://graceful-eel-151.convex.cloud/api/query";
 const WAIT_TIME_URL = "https://robotaxitracker.com/api/wait-time/unified?provider=tesla";
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   // Allow any origin (your artifact, localhost, your domain)
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
