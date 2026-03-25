@@ -27,16 +27,42 @@ module.exports = async function handler(req, res) {
       })
     });
 
-    var waitRes = await fetch(WAIT_TIME_URL);
+    var cybercabRes = await fetch(CONVEX_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        path: "queries/vehicles:getCybercabsByRegion",
+        args: {}
+      })
+    });
+
+    var waitRes = await fetch(WAIT_TIME_URL).catch(function() { return null; });
+
     var fleetJson = await fleetRes.json();
-    var waitJson = await waitRes.json();
+    var cybercabJson = await cybercabRes.json();
+    var waitJson = waitRes ? await waitRes.json().catch(function() { return {}; }) : {};
+
     var fleet = fleetJson.value || fleetJson;
+    var cybercabData = cybercabJson.value || cybercabJson;
+
+    var testRegionCount = 0;
+    if (cybercabData && cybercabData.regions) {
+      cybercabData.regions.forEach(function(region) {
+        if (region.isTestRegion && region.cybercabs) {
+          testRegionCount += region.cybercabs.length;
+        }
+      });
+    }
+
     var ts = fleet.tripStats || {};
+    var displayFleetCount = fleet.totalFleetCount - testRegionCount;
 
     return res.status(200).json({
       timestamp: new Date().toISOString(),
       fleet: {
-        totalFleetCount: fleet.totalFleetCount,
+        totalFleetCount: displayFleetCount,
+        totalFleetCountRaw: fleet.totalFleetCount,
+        testRegionCount: testRegionCount,
         totalWithTest: fleet.totalVehiclesCountWithTest,
         cybercabCount: fleet.cybercabCount,
         unsupervisedCount: fleet.unsupervisedPassengerCount,
