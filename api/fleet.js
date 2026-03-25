@@ -18,26 +18,20 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const fleetRes = await fetch(CONVEX_URL, {
+    var fleetRes = await fetch(CONVEX_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         path: "queries/fleet:getHomepageData",
-        args: {
-          provider: "tesla",
-          sortBy: "recently_discovered",
-          tripLimit: 6,
-          vehicleLimit: 8
-        }
+        args: { provider: "tesla", sortBy: "recently_discovered", tripLimit: 6, vehicleLimit: 8 }
       })
     });
 
-    const waitRes = await fetch(WAIT_TIME_URL);
-
-    const fleetJson = await fleetRes.json();
-    const waitJson = await waitRes.json();
-
-    const fleet = fleetJson.value || fleetJson;
+    var waitRes = await fetch(WAIT_TIME_URL);
+    var fleetJson = await fleetRes.json();
+    var waitJson = await waitRes.json();
+    var fleet = fleetJson.value || fleetJson;
+    var ts = fleet.tripStats || {};
 
     return res.status(200).json({
       timestamp: new Date().toISOString(),
@@ -47,8 +41,15 @@ module.exports = async function handler(req, res) {
         cybercabCount: fleet.cybercabCount,
         unsupervisedCount: fleet.unsupervisedPassengerCount,
         recentVehicles30d: fleet.recentVehiclesCount30d,
-        tripStats: fleet.tripStats ? {
-          totalTrips: fleet.tripStats.totalTrips,
-          totalMiles: fleet.tripStats.totalMiles,
-          avgFare: fleet.tripStats.avgPrice,
-          avgTripMiles: fleet.tri
+        totalTrips: ts.totalTrips,
+        totalMiles: ts.totalMiles,
+        avgFare: ts.avgPrice,
+        avgTripMiles: ts.avgMiles,
+        totalContributors: ts.totalContributors
+      },
+      waitTimes: waitJson.data || waitJson
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
