@@ -5,7 +5,6 @@
 // ─────────────────────────────────────────────────────────
 
 const CONVEX_URL = "https://graceful-eel-151.convex.cloud/api/query";
-const WAIT_TIME_URL = "https://robotaxitracker.com/api/wait-time/unified?provider=tesla";
 
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -36,11 +35,8 @@ module.exports = async function handler(req, res) {
       })
     });
 
-    var waitRes = await fetch(WAIT_TIME_URL).catch(function() { return null; });
-
     var fleetJson = await fleetRes.json();
     var cybercabJson = await cybercabRes.json();
-    var waitJson = waitRes ? await waitRes.json().catch(function() { return {}; }) : {};
 
     var fleet = fleetJson.value || fleetJson;
     var cybercabData = cybercabJson.value || cybercabJson;
@@ -55,16 +51,15 @@ module.exports = async function handler(req, res) {
     }
 
     var ts = fleet.tripStats || {};
-    var displayFleetCount = fleet.totalFleetCount - testRegionCount;
 
     return res.status(200).json({
       timestamp: new Date().toISOString(),
       fleet: {
-        totalFleetCount: displayFleetCount,
+        totalFleetCount: fleet.totalFleetCount - testRegionCount,
         totalFleetCountRaw: fleet.totalFleetCount,
         testRegionCount: testRegionCount,
         totalWithTest: fleet.totalVehiclesCountWithTest,
-        cybercabCount: fleet.cybercabCount,
+        cybercabCount: cybercabData.totalCybercabs,
         unsupervisedCount: fleet.unsupervisedPassengerCount,
         recentVehicles30d: fleet.recentVehiclesCount30d,
         totalTrips: ts.totalTrips,
@@ -72,8 +67,7 @@ module.exports = async function handler(req, res) {
         avgFare: ts.avgPrice,
         avgTripMiles: ts.avgMiles,
         totalContributors: ts.totalContributors
-      },
-      waitTimes: waitJson.data || waitJson
+      }
     });
   } catch (error) {
     return res.status(500).json({ error: error.message });
